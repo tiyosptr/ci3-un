@@ -47,12 +47,12 @@ class AgendaController extends BaseController
     $data = [
         'nomor' => $this->request->getPost('nomor'),
         'sifat' => $this->request->getPost('sifat'),
-        'lampiran' => $this->request->getFile('lampiran'),
-        'absensi' => $this->request->getFile('absensi'),
-        'notulen' => $this->request->getFile('notulen'),
+        'lampiran_surat' => $this->request->getPost('lampiran_surat'),
         'judul' => $this->request->getPost('judul'),
         'tanggal' => $this->request->getPost('tanggal'),
         'tempat' => $this->request->getPost('tempat'),
+        'lampiran' => $this->request->getFile('lampiran'),
+        'catatan' => $this->request->getPost('catatan'),
         'status' => 'Terjadwal',
     ];
 
@@ -60,12 +60,11 @@ class AgendaController extends BaseController
     if ($this->validate([
         'nomor' => 'required',
         'sifat' => 'required',
-        'lampiran' => 'max_size[lampiran,2048]|ext_in[lampiran,pdf]', 
-        'absensi' => 'max_size[absensi,2048]|ext_in[absensi,pdf]',   
-        'notulen' => 'max_size[notulen,2048]|ext_in[notulen,pdf]',   
         'judul' => 'required',
         'tanggal' => 'required',
         'tempat' => 'required',
+        'lampiran' => 'max_size[lampiran,2048]|ext_in[lampiran,pdf]', 
+        'catatan' => 'required',
     ])) {
         // Proses upload file lampiran
         if ($data['lampiran']->isValid() && !$data['lampiran']->hasMoved()) {
@@ -76,23 +75,6 @@ class AgendaController extends BaseController
             $data['lampiran'] = null; // Tidak ada file lampiran
         }
 
-        // Proses upload file absensi
-        if ($data['absensi']->isValid() && !$data['absensi']->hasMoved()) {
-            $fileNameAbsensi = $data['absensi']->getRandomName();
-            $data['absensi']->move('uploads', $fileNameAbsensi);
-            $data['absensi'] = $fileNameAbsensi;
-        } else {
-            $data['absensi'] = null; // Tidak ada file absensi
-        }
-
-        // Proses upload file notulen
-        if ($data['notulen']->isValid() && !$data['notulen']->hasMoved()) {
-            $fileNameNotulen = $data['notulen']->getRandomName();
-            $data['notulen']->move('uploads', $fileNameNotulen);
-            $data['notulen'] = $fileNameNotulen;
-        } else {
-            $data['notulen'] = null; // Tidak ada file notulen
-        }
 
         // Simpan data ke database
         $model = new AgendaModel();
@@ -117,15 +99,14 @@ class AgendaController extends BaseController
         $data = [
             'nomor' => $this->request->getPost('nomor'),
             'sifat' => $this->request->getPost('sifat'),
+            'lampiran_surat' => $this->request->getPost('lampiran_surat'),
             'judul' => $this->request->getPost('judul'),
             'tanggal' => $this->request->getPost('tanggal'),
             'tempat' => $this->request->getPost('tempat'),
-            'status' => $this->request->getPost('status'),
+            'catatan' => $this->request->getPost('catatan'),
         ];
 
         $lampiran = $this->request->getFile('lampiran');
-        $absensi = $this->request->getFile('absensi');
-        $notulen = $this->request->getFile('notulen');
 
         // Proses lampiran
         if ($lampiran && $lampiran->isValid() && !$lampiran->hasMoved()) {
@@ -135,6 +116,38 @@ class AgendaController extends BaseController
         } else {
             $data['lampiran'] = $existingAgenda['lampiran'];
         }
+
+        if ($this->validate([
+            'nomor' => 'required',
+            'sifat' => 'required',
+            'lampiran_surat' => 'required',
+            'judul' => 'required',
+            'tanggal' => 'required',
+            'tempat' => 'required',
+            'catatan' => 'required',
+        ])) {
+            $model->update($id, $data);
+            return redirect()->to('/agenda')->with('success', 'Data berhasil diperbarui');
+        } else {
+            return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+        }
+    }
+
+    public function updateStatus($id)
+    {
+        $model = new AgendaModel();
+        $existingAgenda = $model->find($id);
+
+        if (!$existingAgenda) {
+            return redirect()->to('/agenda')->with('error', 'Data tidak ditemukan');
+        }
+
+        $data = [
+            'jumlah_peserta' => $this->request->getPost('jumlah_peserta'),
+            'status' => 'Selesai',
+        ];
+        $absensi = $this->request->getFile('absensi');
+        $notulen = $this->request->getFile('notulen');
 
         // Proses absensi
         if ($absensi && $absensi->isValid() && !$absensi->hasMoved()) {
@@ -155,11 +168,7 @@ class AgendaController extends BaseController
         }
 
         if ($this->validate([
-            'nomor' => 'required',
-            'sifat' => 'required',
-            'judul' => 'required',
-            'tanggal' => 'required',
-            'tempat' => 'required',
+            'jumlah_peserta' => 'required|numeric',
         ])) {
             $model->update($id, $data);
             return redirect()->to('/agenda')->with('success', 'Data berhasil diperbarui');
@@ -206,8 +215,4 @@ public function delete($id)
     }
 }
 
-
-
-
-    
 }

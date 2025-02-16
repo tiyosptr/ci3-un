@@ -261,7 +261,7 @@
                         <th>Judul Kegiatan</th>
                         <th>Lampiran</th>
                         <th>Status</th>
-                        <th>Hari/Tanggal</th>
+                        <th>Waktu</th>
                         <th>Tempat Agenda</th>
                         <th>Aksi</th>
                       </tr>
@@ -286,10 +286,14 @@
                         <td><?= $agenda['tanggal'] ?></td>
                         <td><?= $agenda['tempat'] ?></td>
                         <td  class="d-flex justify-content-between align-items-center">
-                          <a href="#" class="btn btn-icon btn-dark mr-1" data-toggle="modal" data-target="#uploadModal"><i class="far fa-file"></i></a>
+                          <?php if ($agenda['status'] != 'Selesai'): ?>
+                          <a href="#" class="btn btn-icon btn-dark mr-1" data-toggle="modal" data-target="#update_statusModal"><i class="far fa-file"></i></a>
+                          <?php endif; ?>
                           <a href="#" class="btn btn-icon btn-info mr-1" data-toggle="modal" data-target="#detailModal" data-agenda-id="<?= $agenda['id'] ?>"><i class="fas fa-info-circle"></i></a>
+                          <?php if ($agenda['status'] != 'Selesai'): ?>
                           <a href="#" class="btn btn-icon btn-primary mr-1"  data-toggle="modal" data-target="#editModal"><i class="far fa-edit"></i></a>
                           <button class="btn btn-icon btn-danger" data-toggle="modal" data-target="#deleteModal" data-id="<?= $agenda['id']; ?>"><i class="fas fa-times"></i></button>
+                          <?php endif; ?>
                         </td>
                       </tr>
                       <?php endforeach; ?>
@@ -309,32 +313,40 @@
     </div>
   </div>
 
-    <!-- Upload Modal -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <!-- Update Status Modal -->
+    <div class="modal fade" id="update_statusModal" tabindex="-1" role="dialog" aria-labelledby="update_statusModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="uploadModalLabel">Upload File</h5>
+          <h5 class="modal-title" id="update_statusModalLabel">Update Status</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
-          <!-- Upload form content -->
-          <form>
-            <div class="form-group">
-              <label for="uploadFile">Notulen</label>
-              <input type="file" class="form-control" id="uploadFile">
-            </div>
-            <div class="form-group">
-              <label for="uploadFile">Absensi</label>
-              <input type="file" class="form-control" id="uploadFile">
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Upload</button>
+          <!-- Update Status form content -->
+          <?php if (!empty($agendas)): ?>
+            <form action="/agenda/updateStatus/<?= $agenda['id'] ?>" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="jumlah_peserta">Jumlah Peserta</label>
+                        <input type="number" class="form-control" name="jumlah_peserta" placeholder="Isi Jumlah Peserta" required> 
+                    </div>
+                    <div class="form-group">
+                        <label for="absensi">Absensi (PDF)</label>
+                        <input type="file" class="form-control" name="absensi"  accept="application/pdf">
+                    </div>
+                    <div class="form-group">
+                        <label for="notulen">Notulen Rapat (PDF)</label>
+                        <input type="file" class="form-control" name="notulen"accept="application/pdf">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -355,66 +367,85 @@
     <p>Informasi detail kegiatan...</p>
     <form>
         <div class="form-group">
-            <label>Nomor</label>
+            <label>Nomor Surat</label>
             <div type="text" class="form-control">
                 <?= isset($agenda['nomor']) ? $agenda['nomor'] : 'Tidak ada agenda' ?>
             </div>
         </div>
         <div class="form-group">
-            <label>Sifat</label>
+            <label>Sifat Surat</label>
             <div type="text" class="form-control">
                 <?= isset($agenda['sifat']) ? $agenda['sifat'] : 'Tidak ada agenda' ?>
             </div>
         </div>
-        <!-- Lampiran, Absensi, dan Notulen -->
-        <div>
-            <label>Lampiran:</label>
-            <?php if (isset($agenda['lampiran']) && $agenda['lampiran']): ?>
-                <a href="<?= base_url('uploads/' . $agenda['lampiran']) ?>" target="_blank">Lihat Lampiran</a>
-            <?php else: ?>
-                Tidak ada lampiran
-            <?php endif; ?>
-        </div>
-        <div>
-            <label>Absensi:</label>
-            <?php if (isset($agenda['absensi']) && $agenda['absensi']): ?>
-                <a href="<?= base_url('uploads/' . $agenda['absensi']) ?>" target="_blank">Lihat Absensi</a>
-            <?php else: ?>
-                Tidak ada absensi
-            <?php endif; ?>
-        </div>
-        <div>
-            <label>Notulen:</label>
-            <?php if (isset($agenda['notulen']) && $agenda['notulen']): ?>
-                <a href="<?= base_url('uploads/' . $agenda['notulen']) ?>" target="_blank">Lihat Notulen</a>
-            <?php else: ?>
-                Tidak ada notulen
-            <?php endif; ?>
-        </div>
         <div class="form-group">
-            <label>Judul Kegiatan</label>
+            <label>Lampiran</label>
             <div type="text" class="form-control">
-                <?= isset($agenda['judul']) ? $agenda['judul'] : 'Tidak ada agenda' ?>
+                <?= isset($agenda['lampiran_surat']) ? $agenda['lampiran_surat'] : 'Tidak ada agenda' ?>
             </div>
         </div>
         <div class="form-group">
-            <label>Hari/Tanggal</label>
-            <div type="text" class="form-control">
-                <?= isset($agenda['tanggal']) ? $agenda['tanggal'] : 'Tidak ada agenda' ?>
-            </div>
+          <label>Judul Kegiatan</label>
+          <div type="text" class="form-control">
+            <?= isset($agenda['judul']) ? $agenda['judul'] : 'Tidak ada agenda' ?>
+          </div>
         </div>
         <div class="form-group">
-            <label>Tempat Agenda</label>
-            <div type="text" class="form-control">
-                <?= isset($agenda['tempat']) ? $agenda['tempat'] : 'Tidak ada agenda' ?>
-            </div>
+          <label>Waktu</label>
+          <div type="text" class="form-control">
+            <?= isset($agenda['tanggal']) ? $agenda['tanggal'] : 'Tidak ada agenda' ?>
+          </div>
         </div>
+        <div class="form-group">
+          <label>Tempat Agenda</label>
+          <div type="text" class="form-control">
+            <?= isset($agenda['tempat']) ? $agenda['tempat'] : 'Tidak ada agenda' ?>
+          </div>
+         </div>
+             <div class="form-group">
+                <label>Lampiran:</label>
+                <?php if (isset($agenda['lampiran']) && $agenda['lampiran']): ?>
+                    <a href="<?= base_url('uploads/' . $agenda['lampiran']) ?>" target="_blank">Lihat Lampiran</a>
+                <?php else: ?>
+                    Tidak ada lampiran
+                <?php endif; ?>
+              </div>
+              <div class="form-group">
+                <label>Absensi:</label>
+                <?php if (isset($agenda['absensi']) && $agenda['absensi']): ?>
+                    <a href="<?= base_url('uploads/' . $agenda['absensi']) ?>" target="_blank">Lihat Absensi</a>
+                <?php else: ?>
+                    Tidak ada lampiran
+                <?php endif; ?>
+              </div>
+              <div class="form-group">
+                <label>Notulen Rapat:</label>
+                <?php if (isset($agenda['notulen']) && $agenda['notulen']): ?>
+                    <a href="<?= base_url('uploads/' . $agenda['notulen']) ?>" target="_blank">Lihat Notulen Rapat</a>
+                <?php else: ?>
+                    Tidak ada lampiran
+                <?php endif; ?>
+              </div>
+          <div class="form-group">
+            <label>Catatan</label>
+            <div type="text" class="form-control">
+                <?= isset($agenda['catatan']) ? $agenda['catatan'] : 'Tidak ada agenda' ?>
+          </div>
+                </div>
+          <div class="form-group">
+            <label>Jumlah Peserta Hadir</label>
+            <div type="text" class="form-control">
+                <?= isset($agenda['jumlah_peserta']) ? $agenda['jumlah_peserta'] : 'Tidak ada agenda' ?> Orang
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+                </div>
     </form>
-</div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
+    </div>
       </div>
     </div>
   </div>
@@ -443,26 +474,20 @@
                           <input type="text" class="form-control" name="sifat" value="<?= $agenda['sifat'] ?>" required>
                       </div>
                       <div class="form-group">
+                          <label for="editJudul">Lampiran</label>
+                          <input type="text" class="form-control" name="lampiran_surat" value="<?= $agenda['lampiran_surat'] ?>" required>
+                      </div>
+                      <div class="form-group">
                           <label for="lampiran">Lampiran (PDF)</label>
                           <input type="file" class="form-control" name="lampiran" accept=".pdf">
                           <small>Biarkan kosong jika tidak ingin mengubah lampiran.</small>
-                      </div>
-                      <div class="form-group">
-                          <label for="absensi">Absensi (PDF)</label>
-                          <input type="file" class="form-control" name="absensi" accept=".pdf">
-                          <small>Biarkan kosong jika tidak ingin mengubah absensi.</small>
-                      </div>
-                      <div class="form-group">
-                          <label for="notulen">Lampiran (PDF)</label>
-                          <input type="file" class="form-control" name="notulen" accept=".pdf">
-                          <small>Biarkan kosong jika tidak ingin mengubah notulen.</small>
                       </div>
                       <div class="form-group">
                           <label for="editJudul">Judul Kegiatan</label>
                           <input type="text" class="form-control" name="judul" value="<?= $agenda['judul'] ?>" required>
                       </div>
                       <div class="form-group">
-                          <label for="editJudul">Hari/Tanggal</label>
+                          <label for="editJudul">Waktu</label>
                           <input type="date" class="form-control" name="tanggal" value="<?= $agenda['tanggal'] ?>" required>
                       </div>
                       <div class="form-group">
@@ -470,11 +495,8 @@
                           <input type="text" class="form-control" name="tempat" value="<?= $agenda['tempat'] ?>" required>
                       </div>
                       <div class="form-group">
-                          <label for="status">Status</label>
-                          <select class="form-control" name="status">
-                              <option value="Terjadwal" <?= $agenda['status'] == 'Terjadwal' ? 'selected' : '' ?>>Terjadwal</option>
-                              <option value="Selesai" <?= $agenda['status'] == 'Selesai' ? 'selected' : '' ?>>Selesai</option>
-                          </select>
+                          <label for="editJudul">Catatan</label>
+                          <input type="text" class="form-control" name="catatan" value="<?= $agenda['catatan'] ?>" required>
                       </div>
                       <!-- Tutup form di sini -->
                       <div class="modal-footer">
@@ -524,36 +546,44 @@
           <!-- Tambah form content -->
           <form action="<?= base_url('/agenda/tambah') ?>" method="post" enctype="multipart/form-data">
             <div class="form-group">
-                <label for="nomor">Nomor</label>
+                <label for="nomor">Nomor Surat</label>
                 <input type="text" class="form-control" name="nomor" placeholder="isi Nomor Kegiatan" required>
             </div>
             <div class="form-group">
-                <label for="sifat">Sifat</label>
+                <label for="sifat">Sifat Surat</label>
                 <input type="text" class="form-control" name="sifat" placeholder="Sifat Kegiatan" required>
             </div>
             <div class="form-group">
-                <label for="lampiran">Lampiran (PDF)</label>
-                <input type="file" class="form-control" name="lampiran" accept=".pdf">
+                <label for="sifat">Lampiran</label>
+                <input type="text" class="form-control" name="lampiran_surat" placeholder="Lampiran Surat">
             </div>
-            <div class="form-group">
+            <!-- <div class="form-group">
                 <label for="absensi">absensi (PDF)</label>
                 <input type="file" class="form-control" name="absensi" accept=".pdf">
             </div>
             <div class="form-group">
                 <label for="notulen">notulen (PDF)</label>
                 <input type="file" class="form-control" name="notulen" accept=".pdf">
-            </div>
+            </div> -->
             <div class="form-group">
                 <label for="judul">Judul Kegiatan</label>
                 <input type="text" class="form-control" name="judul" placeholder="Judul Kegiatan" required>
             </div>
             <div class="form-group">
-                <label for="tanggal">Hari/Tanggal</label>
+                <label for="tanggal">Waktu</label>
                 <input type="date" class="form-control" name="tanggal" required>
             </div>
             <div class="form-group">
                 <label for="tempat">Tempat Agenda</label>
                 <input type="text" class="form-control" name="tempat" placeholder="Tempat Agenda Kegiatan" required>
+            </div>
+            <div class="form-group">
+                <label for="lampiran">Lampiran (PDF)</label>
+                <input type="file" class="form-control" name="lampiran" accept=".pdf">
+            </div>
+            <div class="form-group">
+                <label for="sifat">Catatan</label>
+                <input type="text" class="form-control" name="catatan" placeholder="Catatan" required>
             </div>
             <div class="modal-footer">
                 <button type=" button" class="btn btn-secondary" data-dismiss="modal">Close</button>

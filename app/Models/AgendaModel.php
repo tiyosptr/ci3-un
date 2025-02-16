@@ -8,5 +8,5 @@ class AgendaModel extends Model
 {
     protected $table = 'agenda'; // Nama tabel di database
     protected $primaryKey = 'id'; // Primary key
-    protected $allowedFields = ['nomor', 'sifat', 'lampiran', 'judul', 'tanggal', 'tempat', 'status','absensi','notulen']; // Field yang diizinkan
+    protected $allowedFields = ['nomor', 'sifat', 'lampiran_surat', 'judul', 'tanggal', 'tempat', 'status','lampiran', 'catatan','absensi','notulen','jumlah_peserta']; // Field yang diizinkan
 }

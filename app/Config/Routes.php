@@ -15,6 +15,10 @@ $routes->get('/agenda/edit/(:num)', 'AgendaController::edit/$1', ['filter' => 'a
 $routes->post('/agenda/update/(:num)', 'AgendaController::update/$1', ['filter' => 'auth']);
 $routes->get('/agenda/delete/(:num)', 'AgendaController::delete/$1', ['filter' => 'auth']);
 $routes->post('/agenda/getAgendaDetail', 'AgendaController::getAgendaDetail', ['filter' => 'auth']);
+// Rute untuk Update Status
+$routes->get('/agenda/updateStatus/(:num)', 'AgendaController::edit/$1', ['filter' => 'auth']);
+$routes->post('/agenda/updateStatus/(:num)', 'AgendaController::updateStatus/$1', ['filter' => 'auth']);
+
 
 
 

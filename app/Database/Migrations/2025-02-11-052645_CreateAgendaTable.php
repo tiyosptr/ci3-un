@@ -22,20 +22,9 @@ class CreateAgendaTable extends Migration
                 'type' => 'VARCHAR',
                 'constraint' => '100',
             ],
-            'lampiran' => [
+            'lampiran_surat' => [
                 'type' => 'VARCHAR',
-                'constraint' => '255',
-                'null' => true,
-            ],
-            'absensi' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-                'null' => true,
-            ],
-            'notulen' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-                'null' => true,
+                'constraint' => '100',
             ],
             'judul' => [
                 'type' => 'VARCHAR',
@@ -47,6 +36,29 @@ class CreateAgendaTable extends Migration
             'tempat' => [
                 'type' => 'VARCHAR',
                 'constraint' => '255',
+            ],
+            'lampiran' => [
+                'type' => 'VARCHAR',
+                'constraint' => '255',
+                'null' => true,
+            ],
+            'absensi' => [
+                'type' => 'VARCHAR',
+                'constraint' => '255',
+                'null' => true,
+            ],
+            'notulen' => [
+                'type' => 'VARCHAR',
+                'constraint' => '255',
+                'null' => true,
+            ],
+            'catatan' => [
+                'type' => 'VARCHAR',
+                'constraint' => '100',
+            ],
+            'jumlah_peserta' => [
+                'type' => 'VARCHAR',
+                'constraint' => '100',
             ],
             'status' => [
                 'type' => 'VARCHAR',

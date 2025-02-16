@@ -6,137 +6,213 @@ use App\Models\AgendaModel;
 
 class AgendaController extends BaseController
 {
-    // public function index(): mixed
-    // {
-    //     try {
-    //         $model = new AgendaModel();
-    //         $data['agendas'] = $model->findAll();
-    //         return view('agenda', $data);
-    //     } catch (\Exception $e) {
-    //         log_message('error', $e->getMessage());
-    //         return redirect()->to('/')->with('error', 'Terjadi kesalahan.');
-    //     }
-    // }
-
-    public function index() 
+    public function index(): mixed
     {
-        $model = new AgendaModel();
-        $data ['agendas'] = $model->findAll();
-        return view('agenda', $data);
-    }
-    
-
-    public function tambah()
-    {
-        // Validasi input
-        $validation = \Config\Services::validation();
-        $data = [
-            'nomor' => $this->request->getPost('nomor'),
-            'sifat' => $this->request->getPost('sifat'),
-            'lampiran' => $this->request->getFile('lampiran'),
-            'judul' => $this->request->getPost('judul'),
-            'tanggal' => $this->request->getPost('tanggal'),
-            'tempat' => $this->request->getPost('tempat'),
-            'status' => 'Terjadwal',
-        ];
-
-        if ($this->validate([
-            'nomor' => 'required',
-            'sifat' => 'required',
-            'lampiran' => 'uploaded[lampiran]|max_size[lampiran,2048]|ext_in[lampiran,pdf]',
-            'judul' => 'required',
-            'tanggal' => 'required',
-            'tempat' => 'required',
-            
-        ])) {
-            // Proses upload file
-            if ($data['lampiran']->isValid() && !$data['lampiran']->hasMoved()) {
-                $fileName = $data['lampiran']->getRandomName();
-                $data['lampiran']->move('uploads', $fileName);
-                $data['lampiran'] = $fileName; // Simpan nama file
-            }
-
-            // Simpan data ke database
+        try {
             $model = new AgendaModel();
-            $model->save($data);
-
-            return redirect()->to('/agenda')->with('success', 'Data berhasil ditambahkan');
-        } else {
-            return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+    
+            // Ambil kata kunci pencarian dari input form
+            $search = $this->request->getGet('search');
+    
+            if ($search) {
+                // Jika ada kata kunci pencarian, lakukan pencarian berdasarkan judul atau nomor
+                $data['agendas'] = $model->like('judul', $search)
+                                          ->orLike('nomor', $search)
+                                          ->findAll();
+            } else {
+                // Jika tidak ada kata kunci, tampilkan semua data
+                $data['agendas'] = $model->findAll();
+            }
+    
+            // Tambahkan pemeriksaan untuk data kosong
+            if (empty($data['agendas'])) {
+                $data['message'] = 'Tidak ada ';
+            }
+    
+            return view('agenda', $data); // Tetap render halaman meskipun tidak ada data
+        } catch (\Exception $e) {
+            log_message('error', $e->getMessage());
+    
+            // Tetap kembalikan ke halaman view dengan pesan error daripada melakukan redirect
+            return view('agenda', ['error' => 'Terjadi kesalahan saat mengambil data.']);
         }
     }
-
-    public function edit($id)
+    
+    
+    
+    public function tambah()
 {
-    $model = new AgendaModel();
-    
-    // Ambil data agenda berdasarkan ID
-    $data['agenda'] = $model->find($id);
-    
-    // Jika data tidak ditemukan, redirect atau tampilkan error
-    if (!$data['agenda']) {
-        return redirect()->to('/agenda')->with('error', 'Data tidak ditemukan');
-    }
+    // Validasi input
+    $validation = \Config\Services::validation();
+    $data = [
+        'nomor' => $this->request->getPost('nomor'),
+        'sifat' => $this->request->getPost('sifat'),
+        'lampiran_surat' => $this->request->getPost('lampiran_surat'),
+        'judul' => $this->request->getPost('judul'),
+        'tanggal' => $this->request->getPost('tanggal'),
+        'tempat' => $this->request->getPost('tempat'),
+        'lampiran' => $this->request->getFile('lampiran'),
+        'catatan' => $this->request->getPost('catatan'),
+        'status' => 'Terjadwal',
+    ];
 
-    return view('edit_agenda', $data); // Tampilkan view edit
+    // Perubahan validasi, file tidak harus di-upload
+    if ($this->validate([
+        'nomor' => 'required',
+        'sifat' => 'required',
+        'judul' => 'required',
+        'tanggal' => 'required',
+        'tempat' => 'required',
+        'lampiran' => 'max_size[lampiran,2048]|ext_in[lampiran,pdf]', 
+        'catatan' => 'required',
+    ])) {
+        // Proses upload file lampiran
+        if ($data['lampiran']->isValid() && !$data['lampiran']->hasMoved()) {
+            $fileNameLampiran = $data['lampiran']->getRandomName();
+            $data['lampiran']->move('uploads', $fileNameLampiran);
+            $data['lampiran'] = $fileNameLampiran;
+        } else {
+            $data['lampiran'] = null; // Tidak ada file lampiran
+        }
+
+
+        // Simpan data ke database
+        $model = new AgendaModel();
+        $model->save($data);
+
+        return redirect()->to('/agenda')->with('success', 'Data berhasil ditambahkan');
+    } else {
+        return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+    }
 }
+
 
     public function update($id)
     {
         $model = new AgendaModel();
-        
-        // Validasi input
-        $validation = \Config\Services::validation();
+        $existingAgenda = $model->find($id);
+
+        if (!$existingAgenda) {
+            return redirect()->to('/agenda')->with('error', 'Data tidak ditemukan');
+        }
+
         $data = [
             'nomor' => $this->request->getPost('nomor'),
             'sifat' => $this->request->getPost('sifat'),
+            'lampiran_surat' => $this->request->getPost('lampiran_surat'),
             'judul' => $this->request->getPost('judul'),
             'tanggal' => $this->request->getPost('tanggal'),
             'tempat' => $this->request->getPost('tempat'),
-            'status' => $this->request->getPost('status'), // Jika Anda ingin mengizinkan perubahan status
+            'catatan' => $this->request->getPost('catatan'),
         ];
 
-        // Cek apakah ada file lampiran yang diunggah
         $lampiran = $this->request->getFile('lampiran');
+
+        // Proses lampiran
         if ($lampiran && $lampiran->isValid() && !$lampiran->hasMoved()) {
-            // Proses upload file
-            $fileName = $lampiran->getRandomName();
-            $lampiran->move('uploads', $fileName);
-            $data['lampiran'] = $fileName; // Simpan nama file
+            $fileNameLampiran = $lampiran->getRandomName();
+            $lampiran->move('uploads', $fileNameLampiran);
+            $data['lampiran'] = $fileNameLampiran;
         } else {
-            // Jika tidak ada file baru, ambil nama file yang lama
-            $existingAgenda = $model->find($id);
             $data['lampiran'] = $existingAgenda['lampiran'];
         }
 
         if ($this->validate([
             'nomor' => 'required',
             'sifat' => 'required',
+            'lampiran_surat' => 'required',
             'judul' => 'required',
             'tanggal' => 'required',
             'tempat' => 'required',
+            'catatan' => 'required',
         ])) {
-            // Update data ke database
             $model->update($id, $data);
             return redirect()->to('/agenda')->with('success', 'Data berhasil diperbarui');
         } else {
             return redirect()->back()->withInput()->with('errors', $validation->getErrors());
         }
     }
+
+    public function updateStatus($id)
+    {
+        $model = new AgendaModel();
+        $existingAgenda = $model->find($id);
+
+        if (!$existingAgenda) {
+            return redirect()->to('/agenda')->with('error', 'Data tidak ditemukan');
+        }
+
+        $data = [
+            'jumlah_peserta' => $this->request->getPost('jumlah_peserta'),
+            'status' => 'Selesai',
+        ];
+        $absensi = $this->request->getFile('absensi');
+        $notulen = $this->request->getFile('notulen');
+
+        // Proses absensi
+        if ($absensi && $absensi->isValid() && !$absensi->hasMoved()) {
+            $fileNameAbsensi = $absensi->getRandomName();
+            $absensi->move('uploads', $fileNameAbsensi);
+            $data['absensi'] = $fileNameAbsensi;
+        } else {
+            $data['absensi'] = $existingAgenda['absensi'];
+        }
+
+        // Proses notulen
+        if ($notulen && $notulen->isValid() && !$notulen->hasMoved()) {
+            $fileNameNotulen = $notulen->getRandomName();
+            $notulen->move('uploads', $fileNameNotulen);
+            $data['notulen'] = $fileNameNotulen;
+        } else {
+            $data['notulen'] = $existingAgenda['notulen'];
+        }
+
+        if ($this->validate([
+            'jumlah_peserta' => 'required|numeric',
+        ])) {
+            $model->update($id, $data);
+            return redirect()->to('/agenda')->with('success', 'Data berhasil diperbarui');
+        } else {
+            return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+        }
+    }
+
     
-    public function delete($id)
+
+public function delete($id)
 {
     $model = new AgendaModel();
     
-    // Cek apakah data ada
-    $agenda = $model->find($id);
-    if (!$agenda) {
+    // Cek apakah agenda ada
+    $existingAgenda = $model->find($id);
+    if (!$existingAgenda) {
         return redirect()->to('/agenda')->with('error', 'Data tidak ditemukan');
     }
 
-    // Hapus data dari database
+    // Hapus file lampiran jika ada
+    if (!empty($existingAgenda['lampiran']) && file_exists('uploads/' . $existingAgenda['lampiran'])) {
+        unlink('uploads/' . $existingAgenda['lampiran']); // Hapus file lampiran dari folder uploads
+    }
+
+    // Hapus data agenda dari database
     $model->delete($id);
-    
+
     return redirect()->to('/agenda')->with('success', 'Data berhasil dihapus');
 }
+
+    public function getAgendaDetail()
+{
+    $agendaId = $this->request->getPost('id');  // Ambil ID dari request
+
+    $agendaModel = new AgendaModel();
+    $agenda = $agendaModel->find($agendaId);  // Ambil detail agenda berdasarkan ID
+
+    if ($agenda) {
+        // Render tampilan detail agenda
+        return view('partials/agenda_detail', ['agenda' => $agenda]);
+    } else {
+        return "Agenda tidak ditemukan";
+    }
+}
+
 }
